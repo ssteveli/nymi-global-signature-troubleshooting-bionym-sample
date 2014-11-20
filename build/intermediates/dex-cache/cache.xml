@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<pre-dex-items>
+
+    <item
+        dex="/Users/ssteveli/git/BasicExample/app/build/intermediates/pre-dexed/debug/NCL-b7523d668bd0ee0299e944c1a8295e8209a5f1c6.jar"
+        jar="/Users/ssteveli/git/BasicExample/app/libs/NCL.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="0d39f70911c0aa9d0e6ea7ef08bc2e9c90a80710"/>
+
+</pre-dex-items>
