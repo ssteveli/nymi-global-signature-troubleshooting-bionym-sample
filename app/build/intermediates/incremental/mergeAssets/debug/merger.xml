@@ -2,10 +2,10 @@
 <merger version="2" >
 
     <dataSet config="main" >
-        <source path="/Users/ssteveli/git/BasicExample/app/src/main/assets" />
+        <source path="/Users/ssteveli/github/nymi-global-signature-troubleshooting-bionym-sample/app/src/main/assets" />
     </dataSet>
     <dataSet config="debug" >
-        <source path="/Users/ssteveli/git/BasicExample/app/src/debug/assets" />
+        <source path="/Users/ssteveli/github/nymi-global-signature-troubleshooting-bionym-sample/app/src/debug/assets" />
     </dataSet>
 
 </merger>

@@ -1,10 +1,13 @@
 package com.bionym.nclexample;
 
-import com.bionym.ncl.Callbacks;
 import com.bionym.ncl.Ncl;
 import com.bionym.ncl.NclCallback;
 import com.bionym.ncl.NclEvent;
+import com.bionym.ncl.NclEventDisconnection;
+import com.bionym.ncl.NclEventError;
+import com.bionym.ncl.NclEventFind;
 import com.bionym.ncl.NclEventType;
+import com.bionym.ncl.NclEventValidation;
 import com.bionym.ncl.NclProvision;
 
 import android.content.Context;
@@ -92,9 +95,13 @@ public class ValidationController {
 		
 		this.listener = listener;
 
-        nclCallback = new NclCallback(this, "handleCallBack", NclEventType.NCL_EVENT_ANY);
-        boolean result = Ncl.addBehavior(nclCallback);
+        if (nclCallback == null) {
+            nclCallback = new MyNclCallback();
+        }
 
+        Ncl.addBehavior(nclCallback, null, NclEventType.NCL_EVENT_ANY, Ncl.NYMI_HANDLE_ANY);
+
+        nymiHandle = -1;
 		this.provision = provision;
 		ThreadUtil.runTaskAfterMillies(new Runnable() {
             @Override
@@ -110,7 +117,7 @@ public class ValidationController {
 		state = State.FINDING;
 
 		Log.d(LOG_TAG, "start scan");
-        if (!Ncl.startFinding(provision.key, provision.id)) { // Ncl.startFinding(provisions, 1, NclBool.NCL_FALSE)) {
+        if (!Ncl.startFinding(new NclProvision[] {provision}, false)) { // Ncl.startFinding(provisions, 1, NclBool.NCL_FALSE)) {
             Log.d(LOG_TAG, "Failed to start Finding");
             state = State.FAILED;
             if (listener != null) {
@@ -144,83 +151,13 @@ public class ValidationController {
 	 */
 	public void stop() {
         if (nclCallback != null) {
-            Callbacks.removeCallBack(nclCallback);
+            Ncl.removeBehavior(nclCallback, null, NclEventType.NCL_EVENT_ANY, Ncl.NYMI_HANDLE_ANY);
             nclCallback = null;
         }
 
         if (state == State.FINDING) {
             state = null;
             Ncl.stopScan();
-        }
-	}
-
-	/**
-	 * Handle NCL event callback
-	 * @param event the event
-	 * @param userData userData registered
-	 */
-	@SuppressWarnings("unused")
-	public synchronized void handleCallBack(NclEvent event, Object userData) {
-		switch (event.type) {
-        case NCL_EVENT_FIND:
-            Log.d(LOG_TAG, "NCL_EVENT_FIND" + " nymiHandle: " + event.find.nymiHandle);
-            if (state == State.FINDING) { // finding in progress
-                rssi = event.find.rssi;
-                if (rssi > RSSI_THRESHOLD) {
-                    stopFinding();
-                    nymiHandle = event.validation.nymiHandle;
-                    if (listener != null) {
-                        listener.onFound(this);
-                    }
-                    if (!Ncl.validate(event.find.nymiHandle)) {
-                        if (listener != null) {
-                            listener.onFailure(this);
-                        }
-                        state = State.FAILED;
-                        Log.d("NCL_EVENT_FIND", "Validate failed!");
-                    }
-                    else {
-                        state = State.VALIDATING;
-                    }
-                }
-            }
-            break;
-        case NCL_EVENT_VALIDATION: // Nymi is validated, end the finding process, disconnect Nymi, and now you can login your user
-            Log.d("NCL_EVENT_VALIDATION", "Validated in (millies): " + (System.currentTimeMillis() - startFindingTime));
-            nymiHandle = event.validation.nymiHandle;
-            stopFinding();
-            state = State.VALIDATED;
-            if (listener != null) {
-                listener.onValidated(this);
-            }
-            // Disconnect right away once validated. Remove this Ncl.disconnect() if you want to maintain the connection to the Nymi and do more with it
-            Ncl.disconnect(nymiHandle);
-            break;
-        case NCL_EVENT_DISCONNECTION:
-            if (nymiHandle == event.disconnection.nymiHandle) {
-                // Nymi got disconnected, this might be normal case, just make sure we cleanup Nymi, and release wake lock
-                // However, it can also occur when Nymi connection has failed for whatever reason
-                Log.d(LOG_TAG, "NCL_EVENT_DISCONNECTION validated: " + (state == State.VALIDATED));
-                if (state == State.FINDING || state == State.VALIDATING) {
-                    state = State.FAILED;
-                    if (listener != null) {
-                        listener.onFailure(this);
-                    }
-                }
-                state = null;
-                nymiHandle = -1;
-            }
-            break;
-        case NCL_EVENT_ERROR:
-            if (nymiHandle == event.disconnection.nymiHandle) {
-                // We got an error, make sure we cleanup Nymi, and release wake lock
-                Log.d(LOG_TAG, "NCL_EVENT_ERROR");
-                nymiHandle = -1;
-                state = State.FAILED;
-                if (listener != null) {
-                    listener.onFailure(this);
-                }
-            }
         }
 	}
 
@@ -259,7 +196,73 @@ public class ValidationController {
 		 */
 		public void onDisconnected(ValidationController controller);
 	}
-	
+
+    /**
+     * Callback for NclEventInit
+     *
+     */
+    class MyNclCallback implements NclCallback {
+        @Override
+        public void call(final NclEvent event, final Object userData) {
+            Log.d(LOG_TAG, this.toString() + ": " + event.getClass().getName());
+            if (event instanceof NclEventFind) {
+                if (state == State.FINDING) { // finding in progress
+                    rssi = ((NclEventFind) event).rssi;
+                    if (rssi > RSSI_THRESHOLD) {
+                        stopFinding();
+                        nymiHandle = ((NclEventFind) event).nymiHandle;
+                        if (listener != null) {
+                            listener.onFound(ValidationController.this);
+                        }
+
+                        if (!Ncl.validate(((NclEventFind) event).nymiHandle)) {
+                            if (listener != null) {
+                                listener.onFailure(ValidationController.this);
+                            }
+                            state = State.FAILED;
+                            Log.d("NCL_EVENT_FIND", "Validate failed!");
+                        }
+                        else {
+                            state = State.VALIDATING;
+                        }
+                    }
+                }
+            }
+            else if (event instanceof NclEventValidation) {
+                if (nymiHandle == ((NclEventValidation) event).nymiHandle) {
+                    stopFinding();
+                    state = State.VALIDATED;
+                    if (listener != null) {
+                        listener.onValidated(ValidationController.this);
+                    }
+
+                    Ncl.removeBehavior(nclCallback, null, NclEventType.NCL_EVENT_ANY, Ncl.NYMI_HANDLE_ANY);
+                }
+            }
+            else if (event instanceof NclEventDisconnection) {
+                if (((NclEventDisconnection) event).nymiHandle == nymiHandle) { // connected Nymi was disconnected
+                    if (state == State.FINDING || state == State.VALIDATING) {
+                        state = State.FAILED;
+                        if (listener != null) {
+                            listener.onFailure(ValidationController.this);
+                        }
+                    }
+                    state = null;
+                    nymiHandle = -1;
+                    Ncl.removeBehavior(nclCallback, null, NclEventType.NCL_EVENT_ANY, Ncl.NYMI_HANDLE_ANY);
+                }
+            }
+            else if (event instanceof NclEventError) {
+                nymiHandle = -1;
+                state = State.FAILED;
+                if (listener != null) {
+                    listener.onFailure(ValidationController.this);
+                }
+                Ncl.removeBehavior(nclCallback, null, NclEventType.NCL_EVENT_ANY, Ncl.NYMI_HANDLE_ANY);
+            }
+        }
+    }
+
 	public enum State {
 		CREATED, ///< \brief ready to start provision process
 		FINDING, ///< \brief discovery started

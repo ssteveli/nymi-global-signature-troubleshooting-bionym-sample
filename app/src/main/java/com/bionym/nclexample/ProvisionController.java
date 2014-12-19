@@ -6,10 +6,14 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.Log;
 
-import com.bionym.ncl.Callbacks;
 import com.bionym.ncl.Ncl;
 import com.bionym.ncl.NclCallback;
 import com.bionym.ncl.NclEvent;
+import com.bionym.ncl.NclEventAgreement;
+import com.bionym.ncl.NclEventDisconnection;
+import com.bionym.ncl.NclEventDiscovery;
+import com.bionym.ncl.NclEventError;
+import com.bionym.ncl.NclEventProvision;
 import com.bionym.ncl.NclEventType;
 import com.bionym.ncl.NclProvision;
 
@@ -35,7 +39,7 @@ public class ProvisionController {
 	protected State state;
 	protected ProvisionProcessListener provisionListener;
 
-	protected int[][] ledPatterns;
+    protected boolean[][] ledPatterns;
 
 	/**
 	 * Constructor
@@ -65,7 +69,7 @@ public class ProvisionController {
 	 */
 	public void stop() {
 		if (nclCallback != null) {
-			Callbacks.removeCallBack(nclCallback);
+            Ncl.removeBehavior(nclCallback, null, NclEventType.NCL_EVENT_ANY, Ncl.NYMI_HANDLE_ANY);
 			nclCallback = null;
 		}
 
@@ -95,9 +99,9 @@ public class ProvisionController {
 	 * 
 	 * @return the agreement LED pattern
 	 */
-	public int[] getLedPatterns() {
-		return ledPatterns != null? ledPatterns[0]: null;
-	}
+    public boolean[] getLedPatterns() {
+        return ledPatterns != null? ledPatterns[0]: null;
+    }
 
     public Context getContext() {
         return context;
@@ -124,8 +128,12 @@ public class ProvisionController {
 			return false;
 		}
 
-		nclCallback = new NclCallback(this, "handleCallBack", NclEventType.NCL_EVENT_ANY);
-        boolean result = Ncl.addBehavior(nclCallback);
+        nymiHandle = -1;
+        if (nclCallback == null) {
+            nclCallback = new MyNclCallback();
+        }
+
+        Ncl.addBehavior(nclCallback, null, NclEventType.NCL_EVENT_ANY, nymiHandle);
 
         provisionListener = listener;
 
@@ -152,7 +160,7 @@ public class ProvisionController {
 		ThreadUtil.runTask(new Runnable() {
             @Override
             public void run() {
-                Ncl.provision(nymiHandle);
+                Ncl.provision(nymiHandle, false);
             }
         });
 		return true;
@@ -170,9 +178,9 @@ public class ProvisionController {
 	 * 
 	 * @return the agreement pattern
 	 */
-	public int[][] getAgreementPattern() {
-		return ledPatterns;
-	}
+    public boolean[][] getAgreementPattern() {
+        return ledPatterns;
+    }
 
 	/**
 	 * 
@@ -220,7 +228,7 @@ public class ProvisionController {
                             provisionListener.onFailure(ProvisionController.this);
                         }
 
-                        Ncl.removeBehavior(nclCallback);
+                        Ncl.removeBehavior(nclCallback, null, NclEventType.NCL_EVENT_ANY, Ncl.NYMI_HANDLE_ANY);
                     }
 
                     // we have found a Nymi, let's get the agreement pattern
@@ -242,72 +250,6 @@ public class ProvisionController {
 
         return true;
 	}
-
-	/**
-	 * Handle NCL call backs
-	 * @param event the callback event
-	 * @param userData user data
-	 */
-	public void handleCallBack(NclEvent event, Object userData) {
-		Log.d(LOG_TAG, event.type.toString());
-		switch (event.type) {
-		case NCL_EVENT_DISCOVERY:
-			Log.d(LOG_TAG, "Device discovered");
-			if (state == State.DISCOVERING) { // we are still in discovery mode
-                if (event.discovery.rssi > rssi) {
-                    rssi = event.discovery.rssi;
-                    nymiHandle = event.discovery.nymiHandle;
-				}
-			}
-			break;
-		case NCL_EVENT_AGREEMENT:
-			if (event.agreement.nymiHandle == nymiHandle && state == State.AGREEING) {
-				state = State.AGREED;
-				nymiHandle = event.agreement.nymiHandle;
-				ledPatterns = event.agreement.leds;
-                Log.d(LOG_TAG, "Agreement pattern: " + Arrays.toString(ledPatterns[0]));
-				if (provisionListener != null) {
-					provisionListener.onAgreement(ProvisionController.this);
-				}
-			}
-			break;
-		case NCL_EVENT_PROVISION: {
-			if (event.provision.nymiHandle == nymiHandle && state == State.PROVISIONING) {
-				Log.d(LOG_TAG, "Provision is successful!");
-				provision = event.provision.provision;
-                state = State.SUCCEEDED;
-			}
-			break;
-		}
-		case NCL_EVENT_DISCONNECTION:
-			if (event.disconnection.nymiHandle == nymiHandle) {
-				if (state == State.SUCCEEDED) {
-					if (provisionListener != null) {
-						provisionListener.onProvisioned(ProvisionController.this);
-					}
-				}
-				else {
-                    if (provisionListener != null) {
-                        provisionListener.onFailure(ProvisionController.this);
-                    }
-                    state = State.FAILED;
-                }
-                state = null;
-			}		
-			break;
-		case NCL_EVENT_ERROR:
-            if (event.disconnection.nymiHandle == nymiHandle) {
-                Log.e(LOG_TAG, "NCL failed!");
-                state = State.FAILED;
-                if (provisionListener != null) {
-                    provisionListener.onFailure(this);
-                }
-            }
-			break;
-		default:
-		}
-	}
-
 	
 	/**
 	 * Interface for listening on the provision process
@@ -344,8 +286,72 @@ public class ProvisionController {
 		 */
 		public void onDisconnected(ProvisionController controller);
 	}
-	
-	public enum State {
+
+    /**
+     * Callback for NclEventInit
+     *
+     */
+    class MyNclCallback implements NclCallback {
+        @Override
+        public void call(NclEvent event, Object userData) {
+            Log.d(LOG_TAG, this.toString() + ": " + event.getClass().getName());
+            if (event instanceof NclEventDiscovery) {
+                Log.d(LOG_TAG, "Device discovered: " +
+                        ((NclEventDiscovery) event).nymiHandle + " rssi: " +
+                        ((NclEventDiscovery) event).rssi);
+                if (state == State.DISCOVERING) { // we are still in discovery mode
+                    if (((NclEventDiscovery) event).rssi > rssi) {
+                        rssi = ((NclEventDiscovery) event).rssi;
+                        nymiHandle = ((NclEventDiscovery) event).nymiHandle;
+                    }
+                }
+            }
+            else if (event instanceof NclEventAgreement) {
+                if (((NclEventAgreement) event).nymiHandle == nymiHandle && state == State.AGREEING) {
+                    state = State.AGREED;
+                    nymiHandle = ((NclEventAgreement) event).nymiHandle;
+                    ledPatterns = ((NclEventAgreement) event).leds;
+                    Log.d(LOG_TAG, "Agreement pattern: " + Arrays.toString(ledPatterns[0]));
+                    if (provisionListener != null) {
+                        provisionListener.onAgreement(ProvisionController.this);
+                    }
+                }
+            }
+            else if (event instanceof NclEventProvision) {
+                if (((NclEventProvision) event).nymiHandle == nymiHandle && state == State.PROVISIONING) {
+                    Log.d(LOG_TAG, "Provision is successful!");
+                    provision = ((NclEventProvision) event).provision;
+                    state = State.SUCCEEDED;
+                }
+            }
+            else if (event instanceof NclEventDisconnection) {
+                if (((NclEventDisconnection) event).nymiHandle == nymiHandle) { // connected Nymi was disconnected
+                    if (state == State.SUCCEEDED) {
+                        if (provisionListener != null) {
+                            provisionListener.onProvisioned(ProvisionController.this);
+                        }
+                    }
+                    else {
+                        if (provisionListener != null) {
+                            provisionListener.onFailure(ProvisionController.this);
+                        }
+                        state = State.FAILED;
+                    }
+                    state = null;
+                    Ncl.removeBehavior(nclCallback, null, NclEventType.NCL_EVENT_ANY, Ncl.NYMI_HANDLE_ANY);
+                }
+            }
+            else if (event instanceof NclEventError) {
+                state = State.FAILED;
+                if (provisionListener != null) {
+                    provisionListener.onFailure(ProvisionController.this);
+                }
+                Ncl.removeBehavior(nclCallback, null, NclEventType.NCL_EVENT_ANY, Ncl.NYMI_HANDLE_ANY);
+            }
+        }
+    }
+
+    public enum State {
 		DISCOVERING, ///< \brief discovery started
 		AGREEING, ///< \brief agreement in progress, but hasn't finished yet. \warning Stopping provision operation during this state will cause desynchronization between Nymi state and NCL state
 		AGREED, ///< \brief agreement completed User should call \ref accept or \ref reject based on the \ref leds result

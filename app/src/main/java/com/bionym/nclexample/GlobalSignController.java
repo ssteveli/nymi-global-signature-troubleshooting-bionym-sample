@@ -3,55 +3,66 @@ package com.bionym.nclexample;
 import android.content.Context;
 import android.util.Log;
 
-import com.bionym.ncl.Callbacks;
 import com.bionym.ncl.Ncl;
-import com.bionym.ncl.NclBool;
+import com.bionym.ncl.NclAdv;
 import com.bionym.ncl.NclCallback;
 import com.bionym.ncl.NclEvent;
+import com.bionym.ncl.NclEventDetection;
+import com.bionym.ncl.NclEventDisconnection;
+import com.bionym.ncl.NclEventError;
+import com.bionym.ncl.NclEventFind;
+import com.bionym.ncl.NclEventGlobalVk;
 import com.bionym.ncl.NclEventType;
+import com.bionym.ncl.NclEventValidation;
+import com.bionym.ncl.NclMessage;
+import com.bionym.ncl.NclPartnerPrivateKey;
+import com.bionym.ncl.NclPartnerPublicKey;
 import com.bionym.ncl.NclProvision;
+import com.bionym.ncl.NclSig;
+import com.bionym.ncl.NclVk;
+import com.bionym.ncl.NclVkId;
 
 public class GlobalSignController {
 	// Constants
 	protected static final String LOG_TAG = "Nymi NCA GlobalSignController";
 	protected static final int RSSI_THRESHOLD = -60; // the minimal RSSI for accepting a Nymi, this seems to be more reasonable for one sample due to fluctuation
 
-    public final static char[] staticPublicKey = { (char) 0x71, (char) 0x88, (char) 0xee,
-            (char) 0xb, (char) 0xf4, (char) 0xd2, (char) 0xe1, (char) 0x74,
-            (char) 0xca, (char) 0x5e, (char) 0x29, (char) 0x50, (char) 0xe7,
-            (char) 0xaa, (char) 0x24, (char) 0x7d, (char) 0x8a, (char) 0xe8,
-            (char) 0xf0, (char) 0x76, (char) 0x95, (char) 0x5, (char) 0xea,
-            (char) 0x9d, (char) 0xf1, (char) 0xc6, (char) 0xd1, (char) 0xa6,
-            (char) 0x10, (char) 0x55, (char) 0xdb, (char) 0x2, (char) 0xed,
-            (char) 0x60, (char) 0x1c, (char) 0xa0, (char) 0x7c, (char) 0xa4,
-            (char) 0x9e, (char) 0x52, (char) 0xf8, (char) 0x0, (char) 0xa5,
-            (char) 0xec, (char) 0xf9, (char) 0xac, (char) 0x54, (char) 0xfa,
-            (char) 0xac, (char) 0xff, (char) 0x4f, (char) 0x44, (char) 0x19,
-            (char) 0x8f, (char) 0xb8, (char) 0x7e, (char) 0x45, (char) 0xaf,
-            (char) 0xf1, (char) 0x8d, (char) 0x9b, (char) 0xc, (char) 0xaf,
-            (char) 0x2d };
+    public final static byte[] staticPublicKey = { (byte) 0x71, (byte) 0x88, (byte) 0xee,
+            (byte) 0xb, (byte) 0xf4, (byte) 0xd2, (byte) 0xe1, (byte) 0x74,
+            (byte) 0xca, (byte) 0x5e, (byte) 0x29, (byte) 0x50, (byte) 0xe7,
+            (byte) 0xaa, (byte) 0x24, (byte) 0x7d, (byte) 0x8a, (byte) 0xe8,
+            (byte) 0xf0, (byte) 0x76, (byte) 0x95, (byte) 0x5, (byte) 0xea,
+            (byte) 0x9d, (byte) 0xf1, (byte) 0xc6, (byte) 0xd1, (byte) 0xa6,
+            (byte) 0x10, (byte) 0x55, (byte) 0xdb, (byte) 0x2, (byte) 0xed,
+            (byte) 0x60, (byte) 0x1c, (byte) 0xa0, (byte) 0x7c, (byte) 0xa4,
+            (byte) 0x9e, (byte) 0x52, (byte) 0xf8, (byte) 0x0, (byte) 0xa5,
+            (byte) 0xec, (byte) 0xf9, (byte) 0xac, (byte) 0x54, (byte) 0xfa,
+            (byte) 0xac, (byte) 0xff, (byte) 0x4f, (byte) 0x44, (byte) 0x19,
+            (byte) 0x8f, (byte) 0xb8, (byte) 0x7e, (byte) 0x45, (byte) 0xaf,
+            (byte) 0xf1, (byte) 0x8d, (byte) 0x9b, (byte) 0xc, (byte) 0xaf,
+            (byte) 0x2d };
 
-    public final static char[] staticPrivateKey = { (char) 0x3a, (char) 0x41, (char) 0x26,
-            (char) 0x1a, (char) 0xcf, (char) 0xe1, (char) 0xe0, (char) 0x31,
-            (char) 0xf4, (char) 0xa1, (char) 0x8b, (char) 0x24, (char) 0x85,
-            (char) 0xa4, (char) 0x97, (char) 0xdc, (char) 0x31, (char) 0xab,
-            (char) 0x75, (char) 0xc1, (char) 0x3a, (char) 0xc, (char) 0x2,
-            (char) 0xa8, (char) 0x4f, (char) 0x52, (char) 0xa1, (char) 0xec,
-            (char) 0xa6, (char) 0x71, (char) 0xe2, (char) 0x61 };
+    public final static byte[] staticPrivateKey = { (byte) 0x3a, (byte) 0x41, (byte) 0x26,
+            (byte) 0x1a, (byte) 0xcf, (byte) 0xe1, (byte) 0xe0, (byte) 0x31,
+            (byte) 0xf4, (byte) 0xa1, (byte) 0x8b, (byte) 0x24, (byte) 0x85,
+            (byte) 0xa4, (byte) 0x97, (byte) 0xdc, (byte) 0x31, (byte) 0xab,
+            (byte) 0x75, (byte) 0xc1, (byte) 0x3a, (byte) 0xc, (byte) 0x2,
+            (byte) 0xa8, (byte) 0x4f, (byte) 0x52, (byte) 0xa1, (byte) 0xec,
+            (byte) 0xa6, (byte) 0x71, (byte) 0xe2, (byte) 0x61 };
 
-    public final static char[] staticNonce = {
-            (char) 0x3a, (char) 0x41, (char) 0x26,
-            (char) 0x1a, (char) 0xcf, (char) 0xe1, (char) 0xe0, (char) 0x31,
-            (char) 0xf4, (char) 0xa1, (char) 0x8b, (char) 0x24, (char) 0x85,
-            (char) 0xa4, (char) 0x97, (char) 0xdc };
+    public final static byte[] staticNonce = {
+            (byte) 0x3a, (byte) 0x41, (byte) 0x26,
+            (byte) 0x1a, (byte) 0xcf, (byte) 0xe1, (byte) 0xe0, (byte) 0x31,
+            (byte) 0xf4, (byte) 0xa1, (byte) 0x8b, (byte) 0x24, (byte) 0x85,
+            (byte) 0xa4, (byte) 0x97, (byte) 0xdc };
 
-    public final static char[] staticBionymSignature = { (char) 0x3a, (char) 0x41, (char) 0x26,
-            (char) 0x1a, (char) 0xcf, (char) 0xe1, (char) 0xe0, (char) 0x31,
-            (char) 0xf4, (char) 0xa1, (char) 0x8b, (char) 0x24, (char) 0x85,
-            (char) 0xa4, (char) 0x97, (char) 0xdc, (char) 0x31, (char) 0xab,
-            (char) 0x75, (char) 0xc1, (char) 0x3a, (char) 0xc, (char) 0x2,
-            (char) 0xa8, (char) 0x4f, (char) 0x52, (char) 0xa1, (char) 0xec,
-            (char) 0xa6, (char) 0x71, (char) 0xe2, (char) 0x61 };
+    public final static byte[] staticBionymSignature = { (byte) 0x3a, (byte) 0x41, (byte) 0x26,
+            (byte) 0x1a, (byte) 0xcf, (byte) 0xe1, (byte) 0xe0, (byte) 0x31,
+            (byte) 0xf4, (byte) 0xa1, (byte) 0x8b, (byte) 0x24, (byte) 0x85,
+            (byte) 0xa4, (byte) 0x97, (byte) 0xdc, (byte) 0x31, (byte) 0xab,
+            (byte) 0x75, (byte) 0xc1, (byte) 0x3a, (byte) 0xc, (byte) 0x2,
+            (byte) 0xa8, (byte) 0x4f, (byte) 0x52, (byte) 0xa1, (byte) 0xec,
+            (byte) 0xa6, (byte) 0x71, (byte) 0xe2, (byte) 0x61 };
 
 	// NCL event callbacks
 	protected static NclCallback nclCallback;
@@ -72,8 +83,8 @@ public class GlobalSignController {
 	Context context;
 	GlobalSignListener listener;
 
-    protected char[] vkId;
-    protected char[] vkKey;
+    protected NclVkId vkId;
+    protected NclVk vkKey;
 
 	/**
 	 * Constructor
@@ -133,9 +144,13 @@ public class GlobalSignController {
 		
 		this.listener = listener;
 
-        nclCallback = new NclCallback(this, "handleCallBack", NclEventType.NCL_EVENT_ANY);
-        boolean result = Ncl.addBehavior(nclCallback);
+        if (nclCallback == null) {
+            nclCallback = new MyNclCallback();
+        }
+        
+        Ncl.addBehavior(nclCallback, null, NclEventType.NCL_EVENT_ANY, Ncl.NYMI_HANDLE_ANY);
 
+        nymiHandle = -1;
 		this.provision = provision;
 		ThreadUtil.runTaskAfterMillies(new Runnable() {
             @Override
@@ -151,7 +166,7 @@ public class GlobalSignController {
 		state = State.FINDING;
 
 		Log.d(LOG_TAG, "start scan");
-        if (!Ncl.startFinding(provision.key, provision.id)) { // Ncl.startFinding(provisions, 1, NclBool.NCL_FALSE)) {
+        if (!Ncl.startFinding(new NclProvision[] {provision}, false)) { // Ncl.startFinding(provisions, 1, NclBool.NCL_FALSE)) {
             Log.d(LOG_TAG, "Failed to start Finding");
             state = State.FAILED;
             if (listener != null) {
@@ -172,18 +187,41 @@ public class GlobalSignController {
 
     protected void createGlobalSignatureKeyPair() {
         if (state == State.VALIDATED) {
-            boolean b = Ncl.createGlobalSigKeyPair(nymiHandle, staticPublicKey, staticBionymSignature);
+            NclPartnerPublicKey pk = new NclPartnerPublicKey();
+            pk.v = staticPublicKey;
+
+            NclSig sig = new NclSig();
+            sig.v = staticBionymSignature;
+
+            boolean b = Ncl.createGlobalSigKeyPair(nymiHandle, pk, sig);
             Log.d(LOG_TAG, "Ncl.createGlobalSigKeyPair(): " + b);
         }
     }
 
     protected void startPartnerAuthentication() {
         if (state == State.PARTNER_DISCOVERY) {
-            state = State.GLOBAL_SIGN;
-            char[] adv = Ncl.getAdvertisment(nymiHandle);
-            char[] signedNonce = Ncl.signAdvertisment(adv, staticNonce, staticPrivateKey);
+            Log.d(LOG_TAG, "getting ready to call Ncl.globalSign()");
 
-            boolean b = Ncl.globalSign(nymiHandle, signedNonce, staticPublicKey, staticNonce);
+            state = State.GLOBAL_SIGN;
+
+            NclAdv adv = new NclAdv();
+            Log.d(LOG_TAG, "getting advertisement");
+            Ncl.getAdv(nymiHandle, adv);
+
+            NclPartnerPublicKey pk = new NclPartnerPublicKey();
+            pk.v = staticPublicKey;
+
+            NclPartnerPrivateKey pvt = new NclPartnerPrivateKey();
+            pvt.v = staticPrivateKey;
+
+            NclMessage terminalNonce = new NclMessage();
+            terminalNonce.v = staticNonce;
+
+            NclSig signedNonce = new NclSig();
+            Ncl.signAdv(adv, terminalNonce, pvt, signedNonce);
+
+            Log.d(LOG_TAG, "calling Ncl.globalSign()");
+            boolean b = Ncl.globalSign(nymiHandle, signedNonce, pk, terminalNonce);
             Log.d(LOG_TAG, "Ncl.globalSign(): " + b);
         }
     }
@@ -203,115 +241,13 @@ public class GlobalSignController {
 	 */
 	public void stop() {
         if (nclCallback != null) {
-            Callbacks.removeCallBack(nclCallback);
+            Ncl.removeBehavior(nclCallback, null, NclEventType.NCL_EVENT_ANY, Ncl.NYMI_HANDLE_ANY);
             nclCallback = null;
         }
 
         if (state == State.FINDING) {
             state = null;
             Ncl.stopScan();
-        }
-	}
-
-	/**
-	 * Handle NCL event callback
-	 * @param event the event
-	 * @param userData userData registered
-	 */
-	@SuppressWarnings("unused")
-	public synchronized void handleCallBack(NclEvent event, Object userData) {
-		switch (event.type) {
-        case NCL_EVENT_FIND:
-            Log.d(LOG_TAG, "NCL_EVENT_FIND" + " nymiHandle: " + event.find.nymiHandle);
-            if (state == State.FINDING) { // finding in progress
-                rssi = event.find.rssi;
-                if (rssi > RSSI_THRESHOLD) {
-                    stopFinding();
-                    nymiHandle = event.validation.nymiHandle;
-                    if (listener != null) {
-                        listener.onFound(this);
-                    }
-                    if (!Ncl.validate(event.find.nymiHandle)) {
-                        if (listener != null) {
-                            listener.onFailure(this);
-                        }
-                        state = State.FAILED;
-                        Log.d("NCL_EVENT_FIND", "Validate failed!");
-                    }
-                    else {
-                        state = State.VALIDATING;
-                    }
-                }
-            }
-            break;
-        case NCL_EVENT_DETECTION:
-            if (state == State.PARTNER_DISCOVERY) {
-                rssi = event.find.rssi;
-                if (rssi > RSSI_THRESHOLD) {
-                    stopFinding();
-                    nymiHandle = event.detection.nymiHandle;
-                    startPartnerAuthentication();
-                } else {
-                    Log.d(LOG_TAG, "rssi of " + rssi + " to low, must be greater than " + RSSI_THRESHOLD);
-                }
-            } else {
-                Log.d(LOG_TAG, "unexpected state " + state + " on NCL_EVENT_DETECTION");
-            }
-            break;
-        case NCL_EVENT_VALIDATION: // Nymi is validated, end the finding process, disconnect Nymi, and now you can login your user
-            Log.d("NCL_EVENT_VALIDATION", "Validated in (millies): " + (System.currentTimeMillis() - startFindingTime));
-            nymiHandle = event.validation.nymiHandle;
-            stopFinding();
-            state = State.VALIDATED;
-            if (listener != null) {
-                listener.onValidated(this);
-            }
-            createGlobalSignatureKeyPair();
-            break;
-        case NCL_EVENT_GLOBAL_VK:
-            Log.d(LOG_TAG, "global signature created");
-            vkId = event.globalVk.id;
-            vkKey = event.globalVk.vk;
-            state = State.GLOBAL_KEYPAIR_CREATED;
-            Ncl.disconnect(nymiHandle);
-            break;
-        case NCL_EVENT_DISCONNECTION:
-            if (nymiHandle == event.disconnection.nymiHandle) {
-                // Nymi got disconnected, this might be normal case, just make sure we cleanup Nymi, and release wake lock
-                // However, it can also occur when Nymi connection has failed for whatever reason
-                Log.d(LOG_TAG, "NCL_EVENT_DISCONNECTION validated: " + (state == State.VALIDATED));
-                if (state == State.FINDING || state == State.VALIDATING) {
-                    state = State.FAILED;
-                    if (listener != null) {
-                        listener.onFailure(this);
-                    }
-                } else if (state == State.GLOBAL_KEYPAIR_CREATED) {
-                    Log.d(LOG_TAG, "starting partner discovery");
-                    state = State.PARTNER_DISCOVERY;
-                    boolean b = Ncl.startFinding(null, 0, NclBool.NCL_TRUE);
-                    Log.d(LOG_TAG, "startFinding(): " + b);
-                    break;
-                } else if (state == State.GLOBAL_SIGN) {
-                    Log.d(LOG_TAG, "this is the problem, a disconnect after Ncl.globalSign()");
-                    state = state.FAILED;
-                    if (listener != null) {
-                        listener.onFailure(this);
-                    }
-                }
-                state = null;
-                nymiHandle = -1;
-            }
-            break;
-        case NCL_EVENT_ERROR:
-            if (nymiHandle == event.disconnection.nymiHandle) {
-                // We got an error, make sure we cleanup Nymi, and release wake lock
-                Log.d(LOG_TAG, "NCL_EVENT_ERROR");
-                nymiHandle = -1;
-                state = State.FAILED;
-                if (listener != null) {
-                    listener.onFailure(this);
-                }
-            }
         }
 	}
 
@@ -351,6 +287,103 @@ public class GlobalSignController {
 		public void onDisconnected(GlobalSignController controller);
 	}
 	
+    public class MyNclCallback implements NclCallback {
+        @Override
+        public void call(final NclEvent event, final Object userData) {
+            Log.d(LOG_TAG, this.toString() + ": " + event.getClass().getName());
+            if (event instanceof NclEventFind) {
+                if (state == State.FINDING) { // finding in progress
+                    rssi = ((NclEventFind) event).rssi;
+                    if (rssi > RSSI_THRESHOLD) {
+                        stopFinding();
+                        nymiHandle = ((NclEventFind) event).nymiHandle;
+                        if (listener != null) {
+                            listener.onFound(GlobalSignController.this);
+                        }
+
+                        if (!Ncl.validate(((NclEventFind) event).nymiHandle)) {
+                            if (listener != null) {
+                                listener.onFailure(GlobalSignController.this);
+                            }
+                            state = State.FAILED;
+                            Log.d("NCL_EVENT_FIND", "Validate failed!");
+                        }
+                        else {
+                            state = State.VALIDATING;
+                        }
+                    }
+                }
+            }
+            else if (event instanceof NclEventDetection) {
+                if (state == State.PARTNER_DISCOVERY) {
+                    rssi = ((NclEventDetection)event).rssi;
+                    if (rssi > RSSI_THRESHOLD) {
+                        stopFinding();
+                        nymiHandle = ((NclEventDetection)event).nymiHandle;
+                        startPartnerAuthentication();
+                    } else {
+                        Log.d(LOG_TAG, "rssi of " + rssi + " to low, must be greater than " + RSSI_THRESHOLD);
+                    }
+                } else {
+                    Log.d(LOG_TAG, "unexpected state " + state + " on NCL_EVENT_DETECTION");
+                }
+            }
+            else if (event instanceof NclEventValidation) {
+                if (nymiHandle == ((NclEventValidation) event).nymiHandle) {
+                    stopFinding();
+                    state = State.VALIDATED;
+                    if (listener != null) {
+                        listener.onValidated(GlobalSignController.this);
+                    }
+
+                    createGlobalSignatureKeyPair();
+                }
+            }
+            else if (event instanceof NclEventDisconnection) {
+                if (nymiHandle == ((NclEventDisconnection)event).nymiHandle) {
+                    // Nymi got disconnected, this might be normal case, just make sure we cleanup Nymi, and release wake lock
+                    // However, it can also occur when Nymi connection has failed for whatever reason
+                    Log.d(LOG_TAG, "NCL_EVENT_DISCONNECTION validated: " + (state == State.VALIDATED));
+                    if (state == State.FINDING || state == State.VALIDATING) {
+                        state = State.FAILED;
+                        if (listener != null) {
+                            listener.onFailure(GlobalSignController.this);
+                        }
+                    } else if (state == State.GLOBAL_KEYPAIR_CREATED) {
+                        Log.d(LOG_TAG, "starting partner discovery");
+                        state = State.PARTNER_DISCOVERY;
+                        boolean b = Ncl.startFinding(new NclProvision[0], true);
+                        Log.d(LOG_TAG, "startFinding(): " + b);
+                        return;
+                    } else if (state == State.GLOBAL_SIGN) {
+                        Log.d(LOG_TAG, "this is the problem, a disconnect after Ncl.globalSign()");
+                        state = state.FAILED;
+                        if (listener != null) {
+                            listener.onFailure(GlobalSignController.this);
+                        }
+                    }
+                    state = null;
+                    nymiHandle = -1;
+                }
+            }
+            else if (event instanceof NclEventError) {
+                nymiHandle = -1;
+                state = State.FAILED;
+                if (listener != null) {
+                    listener.onFailure(GlobalSignController.this);
+                }
+                Ncl.removeBehavior(nclCallback, null, NclEventType.NCL_EVENT_ANY, Ncl.NYMI_HANDLE_ANY);
+            }
+            else if (event instanceof NclEventGlobalVk) {
+                Log.d(LOG_TAG, "global signature created");
+                vkId = ((NclEventGlobalVk)event).id;
+                vkKey = ((NclEventGlobalVk)event).vk;
+                state = State.GLOBAL_KEYPAIR_CREATED;
+                Ncl.disconnect(nymiHandle);
+            }
+        }
+    }
+    
 	public enum State {
 		CREATED, ///< \brief ready to start provision process
 		FINDING, ///< \brief discovery started

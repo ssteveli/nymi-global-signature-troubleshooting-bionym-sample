@@ -2,44 +2,44 @@
 <merger version="2" >
 
     <dataSet config="main" >
-        <source path="/Users/ssteveli/git/BasicExample/app/src/main/res" >
+        <source path="/Users/ssteveli/github/nymi-global-signature-troubleshooting-bionym-sample/app/src/main/res" >
             <file
                 name="ic_launcher"
-                path="/Users/ssteveli/git/BasicExample/app/src/main/res/drawable-hdpi/ic_launcher.png"
+                path="/Users/ssteveli/github/nymi-global-signature-troubleshooting-bionym-sample/app/src/main/res/drawable-hdpi/ic_launcher.png"
                 qualifiers="hdpi-v4"
                 type="drawable" />
             <file
                 name="ic_launcher"
-                path="/Users/ssteveli/git/BasicExample/app/src/main/res/drawable-ldpi/ic_launcher.png"
+                path="/Users/ssteveli/github/nymi-global-signature-troubleshooting-bionym-sample/app/src/main/res/drawable-ldpi/ic_launcher.png"
                 qualifiers="ldpi-v4"
                 type="drawable" />
             <file
                 name="ic_launcher"
-                path="/Users/ssteveli/git/BasicExample/app/src/main/res/drawable-mdpi/ic_launcher.png"
+                path="/Users/ssteveli/github/nymi-global-signature-troubleshooting-bionym-sample/app/src/main/res/drawable-mdpi/ic_launcher.png"
                 qualifiers="mdpi-v4"
                 type="drawable" />
             <file
                 name="ic_launcher"
-                path="/Users/ssteveli/git/BasicExample/app/src/main/res/drawable-xhdpi/ic_launcher.png"
+                path="/Users/ssteveli/github/nymi-global-signature-troubleshooting-bionym-sample/app/src/main/res/drawable-xhdpi/ic_launcher.png"
                 qualifiers="xhdpi-v4"
                 type="drawable" />
             <file
                 name="ic_launcher"
-                path="/Users/ssteveli/git/BasicExample/app/src/main/res/drawable-xxhdpi/ic_launcher.png"
+                path="/Users/ssteveli/github/nymi-global-signature-troubleshooting-bionym-sample/app/src/main/res/drawable-xxhdpi/ic_launcher.png"
                 qualifiers="xxhdpi-v4"
                 type="drawable" />
             <file
                 name="main"
-                path="/Users/ssteveli/git/BasicExample/app/src/main/res/layout/main.xml"
+                path="/Users/ssteveli/github/nymi-global-signature-troubleshooting-bionym-sample/app/src/main/res/layout/main.xml"
                 qualifiers=""
                 type="layout" />
             <file
                 name="menu_main"
-                path="/Users/ssteveli/git/BasicExample/app/src/main/res/menu/menu_main.xml"
+                path="/Users/ssteveli/github/nymi-global-signature-troubleshooting-bionym-sample/app/src/main/res/menu/menu_main.xml"
                 qualifiers=""
                 type="menu" />
             <file
-                path="/Users/ssteveli/git/BasicExample/app/src/main/res/values/dimens.xml"
+                path="/Users/ssteveli/github/nymi-global-signature-troubleshooting-bionym-sample/app/src/main/res/values/dimens.xml"
                 qualifiers="" >
                 <dimen name="activity_horizontal_margin" >16dp
                 </dimen>
@@ -47,7 +47,7 @@
                 </dimen>
             </file>
             <file
-                path="/Users/ssteveli/git/BasicExample/app/src/main/res/values/strings.xml"
+                path="/Users/ssteveli/github/nymi-global-signature-troubleshooting-bionym-sample/app/src/main/res/values/strings.xml"
                 qualifiers="" >
                 <string name="global_signature" >Global Signature
                 </string>
@@ -71,7 +71,7 @@
                 </string>
             </file>
             <file
-                path="/Users/ssteveli/git/BasicExample/app/src/main/res/values/styles.xml"
+                path="/Users/ssteveli/github/nymi-global-signature-troubleshooting-bionym-sample/app/src/main/res/values/styles.xml"
                 qualifiers="" >
 
                 <style
@@ -82,17 +82,17 @@
                 </style>
             </file>
             <file
-                path="/Users/ssteveli/git/BasicExample/app/src/main/res/values-w820dp/dimens.xml"
+                path="/Users/ssteveli/github/nymi-global-signature-troubleshooting-bionym-sample/app/src/main/res/values-w820dp/dimens.xml"
                 qualifiers="w820dp-v13" >
                 <dimen name="activity_horizontal_margin" >64dp
                 </dimen>
             </file>
         </source>
-        <source path="/Users/ssteveli/git/BasicExample/app/build/generated/res/rs/debug" />
-        <source path="/Users/ssteveli/git/BasicExample/app/build/generated/res/generated/debug" />
+        <source path="/Users/ssteveli/github/nymi-global-signature-troubleshooting-bionym-sample/app/build/generated/res/rs/debug" />
+        <source path="/Users/ssteveli/github/nymi-global-signature-troubleshooting-bionym-sample/app/build/generated/res/generated/debug" />
     </dataSet>
     <dataSet config="debug" >
-        <source path="/Users/ssteveli/git/BasicExample/app/src/debug/res" />
+        <source path="/Users/ssteveli/github/nymi-global-signature-troubleshooting-bionym-sample/app/src/debug/res" />
     </dataSet>
 
 </merger>

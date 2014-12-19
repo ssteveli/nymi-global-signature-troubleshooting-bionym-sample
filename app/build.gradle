@@ -19,5 +19,5 @@ android {
 }
 
 dependencies {
-    compile files('libs/NCL.jar')
+    compile files('libs/NCL.net.jar')
 }

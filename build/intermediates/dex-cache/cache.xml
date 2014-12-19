@@ -7,5 +7,11 @@
         jumboMode="false"
         revision="20.0.0"
         sha1="0d39f70911c0aa9d0e6ea7ef08bc2e9c90a80710"/>
+    <item
+        dex="/Users/ssteveli/github/nymi-global-signature-troubleshooting-bionym-sample/app/build/intermediates/pre-dexed/debug/NCL.net-a4e0416180206c276eb755a2b091197b3b0bf1c7.jar"
+        jar="/Users/ssteveli/github/nymi-global-signature-troubleshooting-bionym-sample/app/libs/NCL.net.jar"
+        jumboMode="false"
+        revision="20.0.0"
+        sha1="7461ed4e264bb04a3aba470c11f113c7779e30db"/>
 
 </pre-dex-items>

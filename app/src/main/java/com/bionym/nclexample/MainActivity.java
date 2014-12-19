@@ -15,16 +15,18 @@ import android.widget.Toast;
 import com.bionym.ncl.Ncl;
 import com.bionym.ncl.NclCallback;
 import com.bionym.ncl.NclEvent;
-import com.bionym.ncl.NclEventType;
+import com.bionym.ncl.NclEventInit;
+import com.bionym.ncl.NclMode;
 import com.bionym.ncl.NclProvision;
 
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class MainActivity extends Activity implements ProvisionController.ProvisionProcessListener,
-                                                ValidationController.ValidationProcessListener,
-                                                GlobalSignController.GlobalSignListener {
+public class MainActivity extends Activity implements NclCallback,
+        ProvisionController.ProvisionProcessListener,
+        ValidationController.ValidationProcessListener,
+        GlobalSignController.GlobalSignListener {
 
     protected static final String LOG_TAG = "Nymi Main";
 
@@ -202,8 +204,7 @@ public class MainActivity extends Activity implements ProvisionController.Provis
     protected boolean initializeNclForNymiBand() {
         if (!nclInitialized) {
             nclInitialized = true;
-            NclCallback nclCallback = new NclCallback(this, "handleCallBack", NclEventType.NCL_EVENT_ANY);
-            boolean result = Ncl.init(this, nclCallback, null, "NCLExample");
+            boolean result = Ncl.init(this, null, "NCLExample", NclMode.NCL_MODE_DEFAULT, this);
 
             if (!result) { // failed to initialize NCL
                 Toast.makeText(MainActivity.this, "Failed to initialize NCL library!", Toast.LENGTH_LONG).show();
@@ -223,8 +224,8 @@ public class MainActivity extends Activity implements ProvisionController.Provis
     protected boolean initializeNclForNymulator(String ip) {
         if (!nclInitialized) {
             nclInitialized = true;
-            NclCallback nclCallback = new NclCallback(this, "handleCallBack", NclEventType.NCL_EVENT_ANY);
-            boolean result = Ncl.init(this, nclCallback, null, "NCLExample", ip, 9089);
+            Ncl.setIpAndPort(ip, 9089);
+            boolean result = Ncl.init(this, null, "NCLExample", NclMode.NCL_MODE_DEFAULT, this);
 
             if (!result) { // failed to initialize NCL
                 Toast.makeText(MainActivity.this, "Failed to initialize NCL library!", Toast.LENGTH_LONG).show();
@@ -242,9 +243,9 @@ public class MainActivity extends Activity implements ProvisionController.Provis
      * @param event the callback event
      * @param userData user data
      */
-    public void handleCallBack(NclEvent event, Object userData) {
-        if (event.type == NclEventType.NCL_EVENT_INIT) {
-            if (event.init.success == 0) {
+    public void call(NclEvent event, Object userData) {
+        if (event instanceof NclEventInit) {
+            if (((NclEventInit)event).success) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -288,7 +289,7 @@ public class MainActivity extends Activity implements ProvisionController.Provis
                 startProvision.setEnabled(false);
                 startValidation.setEnabled(true);
                 globalSignature.setEnabled(true);
-                Toast.makeText(MainActivity.this, "Nymi provisioned: " + Arrays.toString(provision.id),
+                Toast.makeText(MainActivity.this, "Nymi provisioned: " + Arrays.toString(provision.id.v),
                         Toast.LENGTH_LONG).show();
             }
         });
@@ -323,7 +324,7 @@ public class MainActivity extends Activity implements ProvisionController.Provis
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(MainActivity.this, "Nymi start validation for: " + Arrays.toString(provision.id),
+                Toast.makeText(MainActivity.this, "Nymi start validation for: " + Arrays.toString(provision.id.v),
                         Toast.LENGTH_LONG).show();
             }
         });
@@ -336,7 +337,7 @@ public class MainActivity extends Activity implements ProvisionController.Provis
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(MainActivity.this, "Nymi validation found Nymi on: " + Arrays.toString(provision.id),
+                Toast.makeText(MainActivity.this, "Nymi validation found Nymi on: " + Arrays.toString(provision.id.v),
                         Toast.LENGTH_LONG).show();
             }
         });
@@ -380,7 +381,7 @@ public class MainActivity extends Activity implements ProvisionController.Provis
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(MainActivity.this, "Nymi start validation for: " + Arrays.toString(provision.id),
+                Toast.makeText(MainActivity.this, "Nymi start validation for: " + Arrays.toString(provision.id.v),
                         Toast.LENGTH_LONG).show();
             }
         });
@@ -393,7 +394,7 @@ public class MainActivity extends Activity implements ProvisionController.Provis
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(MainActivity.this, "Nymi validation found Nymi on: " + Arrays.toString(provision.id),
+                Toast.makeText(MainActivity.this, "Nymi validation found Nymi on: " + Arrays.toString(provision.id.v),
                         Toast.LENGTH_LONG).show();
             }
         });

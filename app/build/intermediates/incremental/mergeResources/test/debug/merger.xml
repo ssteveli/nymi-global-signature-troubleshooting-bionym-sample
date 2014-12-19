@@ -2,9 +2,9 @@
 <merger version="2" >
 
     <dataSet config="main" >
-        <source path="/Users/ssteveli/git/BasicExample/app/src/androidTest/res" />
-        <source path="/Users/ssteveli/git/BasicExample/app/build/generated/res/rs/test/debug" />
-        <source path="/Users/ssteveli/git/BasicExample/app/build/generated/res/generated/test/debug" />
+        <source path="/Users/ssteveli/github/nymi-global-signature-troubleshooting-bionym-sample/app/src/androidTest/res" />
+        <source path="/Users/ssteveli/github/nymi-global-signature-troubleshooting-bionym-sample/app/build/generated/res/rs/test/debug" />
+        <source path="/Users/ssteveli/github/nymi-global-signature-troubleshooting-bionym-sample/app/build/generated/res/generated/test/debug" />
     </dataSet>
 
 </merger>
